@@ -13,11 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    
     - uses: actions/checkout@v4
+    - name: Set image tag
+            run: |
+            TAG=$(date +%s)
+            echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: docker build  --file Dockerfile --tag $IMAGE_TAG .
            
 
-    - name: check tag 
-      run: echo " build has successfully completed " \
-           docker images | awk '{print $1 ":" $2}'
+    - name: Show Docker image tag
+      run: |
+          echo "================================"
+          echo "Docker image built successfully"
+          echo "Image: my-image-name:$IMAGE_TAG"
+          echo "================================"
+
+          docker images my-image-name
