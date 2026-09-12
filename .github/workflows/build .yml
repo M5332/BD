@@ -16,10 +16,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-           echo " build has successfully completed "
-           docker images | awk '{print $1 ":" $2}'
-    steps:
-    - uses: actions/checkout@v4
+           
+
     - name: check tag 
       run: echo " build has successfully completed " \
            docker images | awk '{print $1 ":" $2}'
