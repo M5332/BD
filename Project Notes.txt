@@ -4,3 +4,56 @@ creating one folder
 
 
 ento 
+* connect azure with git hub action 
+az ad sp create-for-rbac \
+  --name "github-aks-deployer" \
+  --role contributor \
+  --scopes /subscriptions/subscription id/resourceGroups/resoucregroupname \
+  --sdk-auth
+
+  
+
+*paste the above json in github action secret 
+
+Terraform
+-------------------
+Core Terraform Commands
+terraform init  
+Initializes the working directory, downloads providers, and sets up the backend.
+
+bash
+terraform init
+terraform plan  
+Shows what changes Terraform will make without applying them.
+
+bash
+terraform plan -out=tfplan
+terraform apply  
+Applies the planned changes to create/update resources.
+
+bash
+terraform apply tfplan
+Or simply:
+
+bash
+terraform apply -auto-approve
+terraform output  
+Displays values defined in outputs.tf (like kubeconfig, cluster name).
+
+bash
+terraform output
+terraform destroy  
+Tears down all resources defined in your .tf files.
+
+bash
+terraform destroy -auto-approve
+🛠️ In Your Project Structure
+Since your files are under az_tf, you’ll run commands like:
+
+bash
+cd az_tf
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+terraform output
+terraform destroy -auto-approve
