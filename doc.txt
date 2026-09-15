@@ -5,22 +5,50 @@ az ad sp create-for-rbac \
   --scopes /subscriptions/53c7d7fb-873d-4dfd-a619-df37d702a877/resourceGroups/lab \
   --sdk-auth
 
-  will get josn formate out put 
-  {
-  "clientId": "f0b5fa06-9601-43d4-b0f7-2ce7d9f77d73",
-  "clientSecret": "vB28Q~-SNvfX8~iWdVMcQ5O8GIqZqpF9aj71.a75",
-  "subscriptionId": "53c7d7fb-873d-4dfd-a619-df37d702a877",
-  "tenantId": "d998fac3-ccd1-43ed-a934-2c174bdedd54",
-  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
-  "resourceManagerEndpointUrl": "https://management.azure.com/",
-  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
-  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
-  "galleryEndpointUrl": "https://gallery.azure.com/",
-  "managementEndpointUrl": "https://management.core.windows.net/"
-}
+  
 
 *paste the above json in github action secret 
 
 Terraform
 -------------------
+Core Terraform Commands
+terraform init  
+Initializes the working directory, downloads providers, and sets up the backend.
+
+bash
+terraform init
+terraform plan  
+Shows what changes Terraform will make without applying them.
+
+bash
+terraform plan -out=tfplan
+terraform apply  
+Applies the planned changes to create/update resources.
+
+bash
+terraform apply tfplan
+Or simply:
+
+bash
+terraform apply -auto-approve
+terraform output  
+Displays values defined in outputs.tf (like kubeconfig, cluster name).
+
+bash
+terraform output
+terraform destroy  
+Tears down all resources defined in your .tf files.
+
+bash
+terraform destroy -auto-approve
+🛠️ In Your Project Structure
+Since your files are under az_tf, you’ll run commands like:
+
+bash
+cd az_tf
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+terraform output
+terraform destroy -auto-approve
 
