@@ -1,0 +1,26 @@
+* connect azure with git hub action 
+az ad sp create-for-rbac \
+  --name "github-aks-deployer" \
+  --role contributor \
+  --scopes /subscriptions/53c7d7fb-873d-4dfd-a619-df37d702a877/resourceGroups/lab \
+  --sdk-auth
+
+  will get josn formate out put 
+  {
+  "clientId": "f0b5fa06-9601-43d4-b0f7-2ce7d9f77d73",
+  "clientSecret": "vB28Q~-SNvfX8~iWdVMcQ5O8GIqZqpF9aj71.a75",
+  "subscriptionId": "53c7d7fb-873d-4dfd-a619-df37d702a877",
+  "tenantId": "d998fac3-ccd1-43ed-a934-2c174bdedd54",
+  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+  "resourceManagerEndpointUrl": "https://management.azure.com/",
+  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+  "galleryEndpointUrl": "https://gallery.azure.com/",
+  "managementEndpointUrl": "https://management.core.windows.net/"
+}
+
+*paste the above json in github action secret 
+
+Terraform
+-------------------
+
