@@ -26,30 +26,30 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        uses: dflook/terraform-init@v1
+        uses: dflook/terraform-github-actions/init@v1
         with:
           path: ./az_tf
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
-        uses: dflook/terraform-plan@v1
+        uses: dflook/terraform-github-actions/plan@v1
         with:
           path: ./az_tf
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        uses: dflook/terraform-apply@v1
+        uses: dflook/terraform-github-actions/apply@v1
         with:
           path: ./az_tf
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        uses: dflook/terraform-destroy@v1
+        uses: dflook/terraform-github-actions/destroy@v1
         with:
           path: ./az_tf
 
       - name: Terraform Output
         if: github.event.inputs.action == 'apply'
-        uses: dflook/terraform-output@v1
+        uses: dflook/terraform-github-actions/output@v1
         with:
           path: ./az_tf
