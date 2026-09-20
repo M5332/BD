@@ -30,18 +30,21 @@ jobs:
       uses: dflook/terraform-init@v1
       with:
         path: ./az_tf
+        command: init
 
     - name: Terraform Plan
       if: github.event.inputs.action == 'apply'
       uses: dflook/terraform-plan@v1
       with:
         path: ./az_tf
+        command: Plan
 
     - name: Terraform Apply
       if: github.event.inputs.action == 'apply'
       uses: dflook/terraform-apply@v1
       with:
         path: ./az_tf
+        command: Apply
         auto_approve: true
 
     - name: Terraform Destroy
@@ -49,9 +52,11 @@ jobs:
       uses: dflook/terraform-destroy@v1
       with:
         path: ./az_tf
+        command: Destroy
         auto_approve: true
 
     - name: Terraform Output
       uses: dflook/terraform-output@v1
       with:
         path: ./az_tf
+        command: output

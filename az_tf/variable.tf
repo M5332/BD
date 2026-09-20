@@ -2,7 +2,7 @@ variable "location" {
   default = "eastus"
 }
 variable "resource_group_name" {
-  default = "aks-rg"
+  default = "lab"
 }
 variable "cluster_name" {
   default = "aks-cluster"
