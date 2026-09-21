@@ -8,10 +8,10 @@ ento
 az ad sp create-for-rbac \
   --name "github-aks-deployer" \
   --role contributor \
-  --scopes /subscriptions/subscription id/resourceGroups/resoucregroupname \
+  --scopes /subscriptions/53c7d7fb-873d-4dfd-a619-df37d702a877/resourceGroups/lab \
   --sdk-auth
 
-  
+az ad sp create-for-rbac --name "github-aks-deployer" --role Contributor --scopes "/subscriptions/53c7d7fb-873d-4dfd-a619-df37d702a877/resourceGroups/lab" --json-auth
 
 *paste the above json in github action secret 
 
