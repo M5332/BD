@@ -35,29 +35,29 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./az_tf
-        run: Terraform Init
+        run: terraform init
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
         working-directory: ./az_tf
-        run: Terraform Plan
+        run: terraform plan
         
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
         working-directory: ./az_tf
-        run: Terraform Apply -auto-approve
+        run: terraform apply -auto-approve
         
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
         working-directory: ./az_tf
-        run: Terraform Destroy -auto-approve
+        run: terraform destroy -auto-approve
         
 
       - name: Terraform Output
         if: github.event.inputs.action == 'apply'
         working-directory: ./az_tf
-        run: Terraform output
+        run: terraform output
          
         
