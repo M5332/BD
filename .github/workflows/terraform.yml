@@ -32,31 +32,34 @@ jobs:
            --tenant "$(echo "$AZURE_CREDENTIALS" | jq -r .tenantId)"
            az account show
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Terraform Init
-        uses: dflook/terraform-init@v2
-        with:
-          path: ./az_tf
+        working-directory: ./az_tf
+        run: Terraform Init
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
-        uses: dflook/terraform-plan@v2
-        with:
-          path: ./az_tf
+        working-directory: ./az_tf
+        run: Terraform Plan
+        
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        uses: dflook/terraform-apply@v2
-        with:
-          path: ./az_tf
+        working-directory: ./az_tf
+        run: Terraform Apply -auto-approve
+        
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        uses: dflook/terraform-destroy@v2
-        with:
-          path: ./az_tf
+        working-directory: ./az_tf
+        run: Terraform Destroy -auto-approve
+        
 
       - name: Terraform Output
         if: github.event.inputs.action == 'apply'
-        uses: dflook/terraform-output@v2
-        with:
-          path: ./az_tf
+        working-directory: ./az_tf
+        run: Terraform output
+         
+        
