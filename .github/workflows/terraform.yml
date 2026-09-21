@@ -24,6 +24,13 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          run : 2|
+           echo "$AZURE_CREDENTIALS" | jq .
+           az login --service-principal \
+           --username "$(echo "$AZURE_CREDENTIALS" | jq -r .clientId)" \
+           --password "$(echo "$AZURE_CREDENTIALS" | jq -r .clientSecret)" \
+           --tenant "$(echo "$AZURE_CREDENTIALS" | jq -r .tenantId)"
+           az account show
 
       - name: Terraform Init
         uses: dflook/terraform-github-actions/init@v1
