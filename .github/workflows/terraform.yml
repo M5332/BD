@@ -33,30 +33,30 @@ jobs:
            az account show
 
       - name: Terraform Init
-        uses: dflook/terraform-github-actions/init@v1
+        uses: dflook/terraform-init@v2
         with:
           path: ./az_tf
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
-        uses: dflook/terraform-github-actions/plan@v1
+        uses: dflook/terraform-plan@v2
         with:
           path: ./az_tf
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        uses: dflook/terraform-github-actions/apply@v1
+        uses: dflook/terraform-apply@v2
         with:
           path: ./az_tf
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        uses: dflook/terraform-github-actions/destroy@v1
+        uses: dflook/terraform-destroy@v2
         with:
           path: ./az_tf
 
       - name: Terraform Output
         if: github.event.inputs.action == 'apply'
-        uses: dflook/terraform-github-actions/output@v1
+        uses: dflook/terraform-output@v2
         with:
           path: ./az_tf
