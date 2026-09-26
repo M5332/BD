@@ -20,25 +20,25 @@ jobs:
           auth-type: SERVICE_PRINCIPAL
   
       - name : setup teraform 
-        use: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v3
 
       - name: terraform Init
-        use : M5332/teraform-init@v2
+        uses: M5332/teraform-init@v2
         with:
           path: ./tf2
   
       - name: terraform plan 
-        use: M5332/ terraform-plan@v2
+        uses: M5332/ terraform-plan@v2
         with:
           path: ./tf2
 
       - name: terraform apply
-        use: M5332/terraform-apply@v1
+        uses: M5332/terraform-apply@v1
         with: 
           path: ./tf2
 
       - name: terraform destroy
-        use: M5332/terraform-destroy@v1
+        uses: M5332/terraform-destroy@v1
         with :
           path: ./tf2
   
