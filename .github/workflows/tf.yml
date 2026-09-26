@@ -4,8 +4,13 @@ on:
   workflow_dispatch:
 
 jobs:
+<<<<<<< HEAD
   terraform:
     runs-on: ubuntu-latest
+=======
+  tf:
+  runs-on : ubuntu-latest
+>>>>>>> 115aaf78720d573742423095475f195cc1c3f729
 
     steps:
 
@@ -37,8 +42,16 @@ jobs:
         with: 
           path: ./tf2
 
+<<<<<<< HEAD
       - name: terraform destroy
         use: M5332/terraform-destroy@v1
         with :
           path: ./tf2
   
+=======
+  - name: terraform destroy
+    use: M5332/terraform-destroy@v1
+    with :
+      path: ./tf2
+  
+>>>>>>> 115aaf78720d573742423095475f195cc1c3f729
