@@ -4,7 +4,7 @@ resource "azurerm_resource_group" "rg" {
 }
 resource "azurerm_linux_virtual_machine" "vm" {
   name = "linux-vm"
-  resource_group_name = variable.resource_group_name
-  location = variable.location
-  size = variable.node_vm_size
+  resource_group_name = var.resource_group_name
+  location = var.location
+  size = var.node_vm_size  
 }
