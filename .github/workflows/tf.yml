@@ -2,6 +2,16 @@ name: tf
 
 on: 
   workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform Action"
+        required: true
+        type: choice
+        default: apply
+        options:
+          - plan
+          - apply
+          - destroy
 
 jobs:
   terraform:
@@ -19,26 +29,28 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           auth-type: SERVICE_PRINCIPAL
   
-      - name : setup teraform 
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: terraform Init
-        uses: M5332/teraform-init@v2
-        with:
-          path: ./tf2
-  
-      - name: terraform plan 
-        uses: M5332/ terraform-plan@v2
+      - name: Terraform Init
+        uses: dflook/terraform-init@v1
         with:
           path: ./tf2
 
-      - name: terraform apply
-        uses: M5332/terraform-apply@v1
-        with: 
-          path: ./tf2
+      - name: Terraform Plan
+        if: github.event.inputs.action == 'plan'
+        working-directory: ./tf2
+        run: terraform plan
+        
 
-      - name: terraform destroy
-        uses: M5332/terraform-destroy@v1
-        with :
-          path: ./tf2
-  
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        working-directory: ./tf2
+        run: terraform apply -auto-approve
+        
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy'
+        working-directory: ./tf2
+        run: terraform destroy -auto-approve
+        
