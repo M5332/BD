@@ -35,8 +35,9 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: ./az_tf
-        run: terraform init
+        uses: dflook/terraform-init@v1
+        with:
+          path: ./az_tf
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
