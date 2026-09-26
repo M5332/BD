@@ -4,6 +4,6 @@ variable "resource_group_name"{
 variable "location"{
     default = "eastus"
 }
-variable "node_VM_size"{
+variable "node_vm_size"{
     default = "Standard_DS2_v2"
 }
