@@ -5,7 +5,7 @@ on:
 
 jobs:
   tf:
-  runs-on : ubuntu 
+  runs-on : ubuntu-latest
 
   steps:
 
