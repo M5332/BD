@@ -33,7 +33,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: ./tf2
+        working-directory: /tf2
         run: terraform init
 
       - name: Terraform Plan
