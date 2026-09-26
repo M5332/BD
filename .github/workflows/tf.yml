@@ -3,7 +3,7 @@ name: tf
 on: 
   workflow_dispatch:
 
-job:
+jobs:
   tf:
   runs-on : ubuntu 
 
