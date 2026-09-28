@@ -21,11 +21,11 @@ resource "azurerm_subnet" "private" {
 
 resource "azurerm_network_security_group" "nsg" {
   name                = "aks-nsg"
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   security_rule {
-    name                       = "SSH"
+    name                       = "allow-SSH"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
@@ -36,7 +36,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "HTTP"
+    name                       = "allow-HTTP"
     priority                   = 200
     direction                  = "Inbound"
     access                     = "Allow"
@@ -47,16 +47,15 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-  name                       = "HTTPS"
-  priority                   = 100
-  direction                  = "Inbound"
-  access                     = "Allow"
-  protocol                   = "Tcp"
-
-  source_port_range          = "*"
-  destination_port_range     = "443"
-
-  source_address_prefix      = "*"
-  destination_address_prefix = "*"
+    name                       = "allow-https"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
 }
 }
+
