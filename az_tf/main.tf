@@ -32,6 +32,6 @@ resource "azurerm_kubernetes_cluster_node_pool" "publicpool" {
   name                  = "publicpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
   vm_size               = var.node_vm_size
-  node_count            = 3
+  node_count            = 1
   vnet_subnet_id        = azurerm_subnet.public.id
 }
