@@ -21,6 +21,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
   node_provisioning_profile {
     mode = "Auto"
   }
+  network_profile {
+   network_plugin = "azure"
+   service_cidr = "10.100.0.0/16"
+   dns_service_ip = "10.100.0.10"
+}
 }
 
 resource "azurerm_kubernetes_cluster_node_pool" "publicpool" {
