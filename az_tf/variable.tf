@@ -6,6 +6,6 @@ variable "cluster_name" {
   default = "aks-cluster"
 }
 variable "node_vm_size" {
-  default = "standard_b2pls_v2"
+  default = "Standard_D2nds_v6"
   
 }
