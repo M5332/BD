@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: app
+  pullPolicy: IfNotPresent
+  tag: "0.0.1"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+database:
+  image: mysql:8.4
+  name: mydb2
+  username: appuser
+  port: 3306
+  auth:
+    existingSecret: app-db-credentials
+    rootPasswordKey: mysql-root-password
+    passwordKey: app-password
+  persistence:
+    size: 2Gi
+    storageClass: ""
