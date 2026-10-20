@@ -1,1 +1,16 @@
+name: sample
 
+on:
+  workflow_dispatch: 
+
+jobs:
+
+  sample:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    
+    - name: sample work 
+      run: | 
+            echo " hello"
