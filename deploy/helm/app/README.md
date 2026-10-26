@@ -7,7 +7,7 @@ The chart deploys the Spring Boot application, an internal MySQL service, and a 
 From the repository root:
 
 ```powershell
-docker build -f app/Dockerfile -t app:0.0.1 app
+docker build -f deploy/Dockerfile -t app:0.0.1 app
 ```
 
 Make the image available to your cluster. For Minikube, run `minikube image load app:0.0.1`; for kind, run `kind load docker-image app:0.0.1`. For a remote cluster, push the image to a registry and set `image.repository` and `image.tag` in the Helm values.
@@ -25,7 +25,7 @@ The secret must contain `mysql-root-password` and `app-password` keys. The chart
 ## Install
 
 ```powershell
-helm upgrade --install app ./app/helm/app
+helm upgrade --install app ./deploy/helm/app
 kubectl rollout status deployment/app
 kubectl port-forward service/app 8080:8080
 ```
