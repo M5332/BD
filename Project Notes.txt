@@ -57,3 +57,287 @@ terraform plan -out=tfplan
 terraform apply tfplan
 terraform output
 terraform destroy -auto-approve
+
+------------------------------------------------
+I'll generate a complete Kubernetes setup using these assumptions: Angular frontend + Spring Boot backend + MySQL database, all running inside Kubernetes. You can change the image names and credentials to match your project.
+
+## 1. Architecture
+
+
+Internet / Browser
+
+Ingress — NGINX
+
+/ → Angular · /api → Spring Boot
+
+Angular
+
+Deployment + Service
+
+Spring Boot
+
+Deployment + Service
+
+MySQL StatefulSet
+
+Internal Service + Secret + PVC
+
+## 2. Complete Kubernetes manifest
+
+Save the following as `k8s.yaml`. It includes all the resources needed for this example.
+
+```
+
+# Secret: database credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+stringData:
+  MYSQL_DATABASE: appdb
+  MYSQL_USER: appuser
+  MYSQL_PASSWORD: change-this-password
+  MYSQL_ROOT_PASSWORD: change-this-root-password
+---
+# PVC: persistent MySQL storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# MySQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  serviceName: mysql-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+  volumeClaimTemplates: []
+  # The standalone PVC above is mounted through volumes below
+  # instead of volumeClaimTemplates.
+---
+# MySQL internal Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+# Spring Boot backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springboot-app
+  template:
+    metadata:
+      labels:
+        app: springboot-app
+    spec:
+      containers:
+        - name: springboot
+          image: your-dockerhub-username/springboot-app:1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql-service:3306/appdb
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+---
+# Spring Boot internal Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-service
+spec:
+  type: ClusterIP
+  selector:
+    app: springboot-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# Angular frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: your-dockerhub-username/angular-frontend:1.0.0
+          ports:
+            - containerPort: 80
+---
+# Frontend internal Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# Ingress: external routing
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: springboot-service
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+
+```
+
+## 3. Important correction for MySQL storage
+
+The MySQL StatefulSet above needs a volume mount connected to the PVC. Replace its `volumeMounts` and add `volumes` under the pod template's `spec` as shown below. Remove `volumeClaimTemplates: []`.
+
+```
+
+# Under StatefulSet spec.template.spec:
+volumes:
+  - name: mysql-data
+    persistentVolumeClaim:
+      claimName: mysql-pvc
+
+# Under the MySQL container:
+volumeMounts:
+  - name: mysql-data
+    mountPath: /var/lib/mysql
+
+```
+
+For a production environment, use a suitable storage class, secure your credentials, and configure resource requests, limits, and health probes.
+
+## 4. Deploy the application
+
+First, replace both example Docker image names and the example hostname. Ensure your images are published and your cluster has an NGINX Ingress Controller and a working StorageClass.
+
+```
+# Validate the YAML
+kubectl apply --dry-run=client -f k8s.yaml
+
+# Deploy all resources
+kubectl apply -f k8s.yaml
+
+# Verify resources
+kubectl get deployments
+kubectl get statefulsets
+kubectl get pods
+kubectl get services
+kubectl get pvc
+kubectl get ingress
+
+# Check backend logs
+kubectl logs deployment/springboot-app
+
+# Check MySQL logs
+kubectl logs statefulset/mysql
+```
+
+Frontend configuration: Configure Angular to call `/api` rather than `localhost:8080`. This keeps API calls on the same domain as the frontend. Confirm your Spring Boot routes and security configuration support that path; if they don't, configure an appropriate Ingress rewrite or route.
+
+Note: This is a learning template, not yet a production-ready deployment. The MySQL PVC wiring correction above must be applied before deployment.
