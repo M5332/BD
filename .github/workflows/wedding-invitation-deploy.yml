@@ -32,6 +32,7 @@ jobs:
       WEDDING_HOST: ${{ vars.WEDDING_HOST }}
       IMAGE_NAME: wedding-invitation
       IMAGE_TAG: ${{ github.sha }}
+      APP_NAMESPACE: wedding-invitation
       APP_ACTION: ${{ github.event_name == 'push' && 'deploy' || inputs.action }}
 
     steps:
@@ -106,20 +107,29 @@ jobs:
           kubectl rollout status deployment/ingress-nginx-controller \
             --namespace ingress-nginx --timeout=300s
 
+      - name: Create wedding application namespace
+        if: env.APP_ACTION == 'deploy'
+        run: |
+          kubectl create namespace "$APP_NAMESPACE" \
+            --dry-run=client --output=yaml | kubectl apply --filename=-
+
       - name: Deploy wedding invitation with Helm
         if: env.APP_ACTION == 'deploy'
         run: |
           helm upgrade --install wedding-invitation ./deploy/helm/wedding-invitation \
+            --namespace "$APP_NAMESPACE" \
             --set-string image.repository="${{ steps.acr.outputs.login-server }}/$IMAGE_NAME" \
             --set-string image.tag="$IMAGE_TAG" \
             --set-string ingress.host="$WEDDING_HOST"
-          kubectl rollout status deployment/wedding-invitation --timeout=180s
+          kubectl rollout status deployment/wedding-invitation \
+            --namespace "$APP_NAMESPACE" --timeout=180s
 
       - name: Uninstall wedding invitation
         if: env.APP_ACTION == 'uninstall'
         run: |
-          helm uninstall wedding-invitation --ignore-not-found
-          kubectl get all -l app.kubernetes.io/instance=wedding-invitation --all-namespaces || true
+          helm uninstall wedding-invitation --namespace "$APP_NAMESPACE" --ignore-not-found
+          kubectl get all --namespace "$APP_NAMESPACE" \
+            -l app.kubernetes.io/instance=wedding-invitation
 
       - name: Check deployed infrastructure
         if: env.APP_ACTION == 'check-infra'
@@ -137,8 +147,9 @@ jobs:
           kubectl get service ingress-nginx-controller --namespace ingress-nginx
 
           echo "Checking Helm release..."
-          helm list --namespace default --filter '^wedding-invitation$'
-          kubectl get deployment,service,ingress -l app.kubernetes.io/instance=wedding-invitation
+          helm list --namespace "$APP_NAMESPACE" --filter '^wedding-invitation$'
+          kubectl get deployment,service,ingress --namespace "$APP_NAMESPACE" \
+            -l app.kubernetes.io/instance=wedding-invitation
 
           if [ -n "$ACR_NAME" ]; then
             echo "Checking Azure Container Registry..."
