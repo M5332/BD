@@ -1,0 +1,161 @@
+name: Build and deploy wedding invitation
+
+on:
+  push:
+    branches: [main, deploy]
+    paths:
+      - wedding-invitation/**
+      - deploy/helm/wedding-invitation/**
+      - .github/workflows/wedding-invitation-deploy.yml
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Operation to perform
+        required: true
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - uninstall
+          - check-infra
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      AKS_RESOURCE_GROUP: ${{ vars.AKS_RESOURCE_GROUP }}
+      AKS_CLUSTER_NAME: ${{ vars.AKS_CLUSTER_NAME }}
+      WEDDING_HOST: ${{ vars.WEDDING_HOST }}
+      IMAGE_NAME: wedding-invitation
+      IMAGE_TAG: ${{ github.sha }}
+      APP_ACTION: ${{ github.event_name == 'push' && 'deploy' || inputs.action }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        if: env.APP_ACTION == 'deploy'
+
+      - name: Validate deployment settings
+        run: |
+          test -n "$AKS_RESOURCE_GROUP" || (echo "Set the AKS_RESOURCE_GROUP Actions variable" >&2; exit 1)
+          test -n "$AKS_CLUSTER_NAME" || (echo "Set the AKS_CLUSTER_NAME Actions variable" >&2; exit 1)
+          if [ "$APP_ACTION" = "deploy" ]; then
+            test -n "$ACR_NAME" || (echo "Set the ACR_NAME Actions variable to the Terraform registry name" >&2; exit 1)
+            test -n "$WEDDING_HOST" || (echo "Set the WEDDING_HOST Actions variable to the DNS hostname" >&2; exit 1)
+          fi
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to ACR
+        id: acr
+        if: env.APP_ACTION == 'deploy'
+        run: |
+          az acr login --name "$ACR_NAME"
+          echo "login-server=$(az acr show --name "$ACR_NAME" --query loginServer --output tsv)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        if: env.APP_ACTION == 'deploy'
+
+      - name: Build and push wedding invitation image
+        uses: docker/build-push-action@v6
+        if: env.APP_ACTION == 'deploy'
+        with:
+          context: ./wedding-invitation
+          file: ./wedding-invitation/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.acr.outputs.login-server }}/wedding-invitation:${{ github.sha }}
+            ${{ steps.acr.outputs.login-server }}/wedding-invitation:latest
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ vars.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        if: env.APP_ACTION == 'deploy' || env.APP_ACTION == 'uninstall' || env.APP_ACTION == 'check-infra'
+
+      - name: Install ingress controller
+        env:
+          INGRESS_PUBLIC_IP: ${{ vars.INGRESS_PUBLIC_IP }}
+        if: env.APP_ACTION == 'deploy'
+        run: |
+          if [ -z "$INGRESS_PUBLIC_IP" ]; then
+            INGRESS_PUBLIC_IP=$(az network public-ip show \
+              --resource-group "$AKS_RESOURCE_GROUP" \
+              --name wedding-ingress-ip \
+              --query ipAddress --output tsv)
+          fi
+          test -n "$INGRESS_PUBLIC_IP" || (echo "Terraform ingress public IP was not found" >&2; exit 1)
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update ingress-nginx
+          helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx --create-namespace \
+            --set-string controller.service.loadBalancerIP="$INGRESS_PUBLIC_IP" \
+            --set-string controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$AKS_RESOURCE_GROUP"
+          kubectl rollout status deployment/ingress-nginx-controller \
+            --namespace ingress-nginx --timeout=300s
+
+      - name: Deploy wedding invitation with Helm
+        if: env.APP_ACTION == 'deploy'
+        run: |
+          helm upgrade --install wedding-invitation ./deploy/helm/wedding-invitation \
+            --set-string image.repository="${{ steps.acr.outputs.login-server }}/$IMAGE_NAME" \
+            --set-string image.tag="$IMAGE_TAG" \
+            --set-string ingress.host="$WEDDING_HOST"
+          kubectl rollout status deployment/wedding-invitation --timeout=180s
+
+      - name: Uninstall wedding invitation
+        if: env.APP_ACTION == 'uninstall'
+        run: |
+          helm uninstall wedding-invitation --ignore-not-found
+          kubectl get all -l app.kubernetes.io/instance=wedding-invitation --all-namespaces || true
+
+      - name: Check deployed infrastructure
+        if: env.APP_ACTION == 'check-infra'
+        env:
+          INGRESS_PUBLIC_IP: ${{ vars.INGRESS_PUBLIC_IP }}
+        run: |
+          echo "Checking AKS cluster..."
+          az aks show --resource-group "$AKS_RESOURCE_GROUP" --name "$AKS_CLUSTER_NAME" \
+            --query '{name:name,provisioningState:provisioningState,powerState:powerState.code,kubernetesVersion:kubernetesVersion}' --output table
+          kubectl cluster-info
+          kubectl get nodes
+
+          echo "Checking ingress controller..."
+          kubectl get deployment ingress-nginx-controller --namespace ingress-nginx
+          kubectl get service ingress-nginx-controller --namespace ingress-nginx
+
+          echo "Checking Helm release..."
+          helm list --namespace default --filter '^wedding-invitation$'
+          kubectl get deployment,service,ingress -l app.kubernetes.io/instance=wedding-invitation
+
+          if [ -n "$ACR_NAME" ]; then
+            echo "Checking Azure Container Registry..."
+            az acr show --name "$ACR_NAME" \
+              --query '{name:name,loginServer:loginServer,provisioningState:provisioningState,sku:sku.name}' --output table
+          fi
+
+          if [ -n "$INGRESS_PUBLIC_IP" ]; then
+            echo "Ingress public IP: $INGRESS_PUBLIC_IP"
+          else
+            az network public-ip show \
+              --resource-group "$AKS_RESOURCE_GROUP" \
+              --name wedding-ingress-ip \
+              --query '{name:name,ipAddress:ipAddress,provisioningState:provisioningState}' --output table
+          fi
+
+          if [ -n "$WEDDING_HOST" ]; then
+            echo "Checking DNS name: $WEDDING_HOST"
+            getent ahostsv4 "$WEDDING_HOST" || echo "DNS lookup did not resolve yet"
+          fi
