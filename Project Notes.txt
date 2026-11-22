@@ -86,6 +86,8 @@ Internal Service + Secret + PVC
 
 Save the following as `k8s.yaml`. It includes all the resources needed for this example.
 
+
+
 ```
 
 # Secret: database credentials
@@ -341,3 +343,4 @@ kubectl logs statefulset/mysql
 Frontend configuration: Configure Angular to call `/api` rather than `localhost:8080`. This keeps API calls on the same domain as the frontend. Confirm your Spring Boot routes and security configuration support that path; if they don't, configure an appropriate Ingress rewrite or route.
 
 Note: This is a learning template, not yet a production-ready deployment. The MySQL PVC wiring correction above must be applied before deployment.
+
