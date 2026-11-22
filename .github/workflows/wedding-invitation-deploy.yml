@@ -22,6 +22,9 @@ on:
 permissions:
   contents: read
 
+# Configure these under Settings > Secrets and variables > Actions:
+# Variables: AKS_RESOURCE_GROUP, AKS_CLUSTER_NAME; deploy also needs ACR_NAME and WEDDING_HOST.
+# Secret: AZURE_CREDENTIALS. Optional variables: INGRESS_PUBLIC_IP.
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -42,11 +45,11 @@ jobs:
 
       - name: Validate deployment settings
         run: |
-          test -n "$AKS_RESOURCE_GROUP" || (echo "Set the AKS_RESOURCE_GROUP Actions variable" >&2; exit 1)
-          test -n "$AKS_CLUSTER_NAME" || (echo "Set the AKS_CLUSTER_NAME Actions variable" >&2; exit 1)
+          test -n "$AKS_RESOURCE_GROUP" || (echo "Missing AKS_RESOURCE_GROUP. Add it under repository Settings > Secrets and variables > Actions > Variables." >&2; exit 1)
+          test -n "$AKS_CLUSTER_NAME" || (echo "Missing AKS_CLUSTER_NAME. Add it under repository Settings > Secrets and variables > Actions > Variables." >&2; exit 1)
           if [ "$APP_ACTION" = "deploy" ]; then
-            test -n "$ACR_NAME" || (echo "Set the ACR_NAME Actions variable to the Terraform registry name" >&2; exit 1)
-            test -n "$WEDDING_HOST" || (echo "Set the WEDDING_HOST Actions variable to the DNS hostname" >&2; exit 1)
+            test -n "$ACR_NAME" || (echo "Missing ACR_NAME. Add it under repository Settings > Secrets and variables > Actions > Variables; it must match Terraform." >&2; exit 1)
+            test -n "$WEDDING_HOST" || (echo "Missing WEDDING_HOST. Add it under repository Settings > Secrets and variables > Actions > Variables; use the DNS hostname." >&2; exit 1)
           fi
 
       - name: Log in to Azure

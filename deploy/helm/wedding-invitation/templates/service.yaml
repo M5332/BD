@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "wedding-invitation.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type }}
   ports:
     - name: http
       port: {{ .Values.service.port }}
